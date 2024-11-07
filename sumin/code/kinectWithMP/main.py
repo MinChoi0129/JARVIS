@@ -5,7 +5,7 @@ from kinect_capture import initialize_kinect, get_kinect_capture, close_kinect
 from mp_hand_tracking_model import process_hand_landmarks
 from pcd_on_markerWorld import detect_aruco_marker, load_point_cloud_from_txt, display_point_cloud
 
-point_cloud_file = '../pcd_data/Area_1/conferenceRoom_2/Annotations/chair_20.txt'
+point_cloud_file = '../chair_20.txt'
 
 
 def main():

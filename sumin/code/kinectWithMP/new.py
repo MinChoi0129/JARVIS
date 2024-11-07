@@ -34,6 +34,9 @@ device_config.depth_mode = pykinect.K4A_DEPTH_MODE_WFOV_2X2BINNED
 device = pykinect.start_device(config=device_config)
 bodyTracker = pykinect.start_body_tracker()
 
+vis = o3d.visualization.Visualizer()
+vis.create_window()
+
 
 def detect_aruco_marker(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -88,12 +91,9 @@ def get_kinect_hand_positions(body_frame, c2w):
 if __name__ == "__main__":
     try:
         # 포인트 클라우드 파일 경로 설정
-        point_cloud_file = '../pcd_data/Area_1/conferenceRoom_2/Annotations/chair_20.txt'
+        point_cloud_file = 'chair_20.txt'
         pcd = load_point_cloud_from_txt(
             point_cloud_file, scale=20.0, z_offset=1)
-
-        vis = o3d.visualization.Visualizer()
-        vis.create_window()
 
         box_scale = 10.0
 
@@ -111,10 +111,10 @@ if __name__ == "__main__":
             size=0.7 * box_scale, origin=[0, 0, 0])
 
         left_hand = o3d.geometry.TriangleMesh.create_sphere(radius=1)
-        left_hand.paint_uniform_color([0, 1, 0])
+        left_hand.paint_uniform_color([1, 0, 0])
         left_hand.translate([0, 0, 0])
         right_hand = o3d.geometry.TriangleMesh.create_sphere(radius=1)
-        right_hand.paint_uniform_color([1, 0, 0])
+        right_hand.paint_uniform_color([0, 0, 1])
         right_hand.translate([0, 0, 0])
 
         vis.add_geometry(pcd)
@@ -142,6 +142,9 @@ if __name__ == "__main__":
             C2W = np.linalg.inv(T)
 
             cam_box.transform(C2W)
+        else:
+            print("Marker Not Found!")
+            exit(0)
 
         while True:
             # Kinect에서 캡처 가져오기
