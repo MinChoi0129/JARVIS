@@ -24,11 +24,36 @@ names = {
 }
 
 # 각 컬러맵에서 62개의 색상 (r, g, b) 값 미리 생성하여 캐시
+# precomputed_colors = []
+# for cmap_name in color_map_names:
+#     cmap = plt.get_cmap(cmap_name)
+#     colors = [cmap(i / 62)[:3] for i in range(63)]  # 0부터 61까지의 색상 생성
+#     precomputed_colors.append(colors)
+
+########### 흰색과 검은색이 나오면 객체가 잘 안보이길래 안나오는 코드를 넣었습니다만 지피티돌린거라 수정볼 필요가 있겠씁니다.
 precomputed_colors = []
 for cmap_name in color_map_names:
     cmap = plt.get_cmap(cmap_name)
-    colors = [cmap(i / 62)[:3] for i in range(63)]  # 0부터 61까지의 색상 생성
-    precomputed_colors.append(colors)
+    safe_colors = []
+
+    # 컬러맵에서 62개의 색상을 생성하고 흰색/검은색 근처를 제거
+    for i in range(63):
+        color = cmap(i / 62)[:3]  # (r, g, b) 값만 가져옴
+        if not (
+            np.allclose(color, [1, 1, 1], atol=0.1)  # 흰색 근처
+            or np.allclose(color, [0, 0, 0], atol=0.1)  # 검은색 근처
+        ):
+            safe_colors.append(color)
+
+    # 필터링된 색상 리스트를 사용
+    if len(safe_colors) < 63:
+        # 색상이 부족할 경우 반복해서 추가 (색상 다양성을 유지)
+        safe_colors = (
+            safe_colors * (63 // len(safe_colors))
+            + safe_colors[: 63 % len(safe_colors)]
+        )
+
+    precomputed_colors.append(safe_colors[:63])
 
 
 def load_point_cloud_from_instance_npy(file_path, pred_path, mode):

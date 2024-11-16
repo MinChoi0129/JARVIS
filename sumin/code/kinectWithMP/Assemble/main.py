@@ -4,6 +4,7 @@ from modules.visualization import setup_scene
 from modules.transformation import get_transformation_matrix
 from modules.hand_tracking import get_kinect_hand_positions, update_hand_positions
 from modules.parameters import *
+from modules.mp_hand_tracking_model import process_hand_gestures
 
 
 def logger(*data):
@@ -64,7 +65,19 @@ def main():
                 logger(">>>>>>>>>>> Kinect 프레임을 가져올 수 없습니다.")
                 continue
 
+            # 손 제스처 업데이트
+            try:
+                hand_results = process_hand_gestures(frame)
+                print(hand_results)
+
+            except Exception as e:
+                logger(
+                    e, f">>>>>>>>>>> mp를 사용해 손 제스처를 가져오는데 실패했습니다."
+                )
+                continue
+
             # 손 위치 업데이트
+            # 이안에다가 제스처에 따라 원 색상 변경하는 코드를 추가하는게 낫겠죠?
             try:
                 body_frame = body_tracker.update()
                 ret, left_hand_pos, right_hand_pos = get_kinect_hand_positions(
