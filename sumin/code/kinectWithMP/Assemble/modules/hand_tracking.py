@@ -27,11 +27,24 @@ def update_hand_positions(
     left_hand_pos,
     right_hand_pos,
     instance_spheres,
+    left_hand_ges,
+    right_hand_ges,
 ):
     """손 위치 및 선 업데이트, 인스턴스 구체 색상 변경."""
+    # 손 위치 업데이트
     left_hand.translate((left_hand_pos - np.asarray(left_hand.get_center())))
     right_hand.translate((right_hand_pos - np.asarray(right_hand.get_center())))
 
+    print(left_hand_ges, right_hand_ges)
+
+    # 제스처를 visualization을 위한 손 색상 변화 (fist일 때 색이 진해짐)
+    left_hand_color = [1, 1, 1] if left_hand_ges == "fist" else [0.4, 0, 0]
+    right_hand_color = [1, 1, 1] if right_hand_ges == "fist" else [0, 0, 0.4]
+
+    left_hand.paint_uniform_color(left_hand_color)
+    right_hand.paint_uniform_color(right_hand_color)
+
+    # 손과 손을 잇는 거리 선 업데이트
     new_left_pos, new_right_pos = map(
         np.asarray, (left_hand.get_center(), right_hand.get_center())
     )

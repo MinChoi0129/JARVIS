@@ -21,9 +21,12 @@ def setup_scene(point_cloud_file, label_file, mode, C2W):
         return
 
     # 포인트 클라우드와 인스턴스 구체 로드
-    pcd, instance_spheres = load_point_cloud_from_instance_npy(
-        point_cloud_file, label_file, mode
-    )
+    # pcd, instance_spheres = load_point_cloud_from_instance_npy(
+    #     point_cloud_file, label_file, mode
+    # )
+
+    ### txt ##
+    pcd, instance_spheres = load_point_cloud_from_txt(point_cloud_file, mode)
 
     #################################### PARAMETERS ####################################
     cam_obj_scale = 300

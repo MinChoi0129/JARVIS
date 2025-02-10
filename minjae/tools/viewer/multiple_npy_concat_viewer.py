@@ -9,7 +9,10 @@ file_paths = [
     "/Users/leeminjae0129/Desktop/jarvis/minjae/PointceptS3DISfor702/npy_pred/instance_coord_npy/chair_4.npy",
     "/Users/leeminjae0129/Desktop/jarvis/minjae/PointceptS3DISfor702/npy_pred/instance_coord_npy/chair_5.npy",
     "/Users/leeminjae0129/Desktop/jarvis/minjae/PointceptS3DISfor702/npy_pred/instance_coord_npy/chair_6.npy",
-    # "/Users/leeminjae0129/Desktop/jarvis/minjae/PointceptS3DISfor702/npy_pred/instance_coord_npy/bookcase_0.npy",
+    # "/Use
+    #
+    # \
+    # rs/leeminjae0129/Desktop/jarvis/minjae/PointceptS3DISfor702/npy_pred/instance_coord_npy/bookcase_0.npy",
     # "/Users/leeminjae0129/Desktop/jarvis/minjae/PointceptS3DISfor702/npy_pred/instance_coord_npy/bookcase_1.npy",
     # "/Users/leeminjae0129/Desktop/jarvis/minjae/PointceptS3DISfor702/npy_pred/instance_coord_npy/clutter_8.npy",
 ]

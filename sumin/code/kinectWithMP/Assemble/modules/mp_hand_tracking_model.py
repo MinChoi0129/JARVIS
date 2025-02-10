@@ -41,6 +41,9 @@ action_seqs = {"left": [], "right": []}
 def process_hand_gestures(color_image):
     global seqs, action_seqs
 
+    # axis 1 상하반전
+    color_image = np.flip(color_image, axis=1)
+
     # BGR에서 RGB로 변환
     rgb_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
 
@@ -117,4 +120,4 @@ def process_hand_gestures(color_image):
         # 각 손의 제스처 저장
         detected_hands[handedness] = this_action
 
-    return detected_hands
+    return detected_hands["left"], detected_hands["right"]

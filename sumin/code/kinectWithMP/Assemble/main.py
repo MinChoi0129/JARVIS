@@ -5,6 +5,7 @@ from modules.transformation import get_transformation_matrix
 from modules.hand_tracking import get_kinect_hand_positions, update_hand_positions
 from modules.parameters import *
 from modules.mp_hand_tracking_model import process_hand_gestures
+from modules.manipulate import *
 
 
 def logger(*data):
@@ -45,7 +46,7 @@ def main():
         # 포인트 클라우드 및 장면 설정
         try:
             vis, instance_spheres, left_hand, right_hand, line_set = setup_scene(
-                point_cloud_file="data/702_coord.npy",  # "data/702_coord.npy"
+                point_cloud_file="data/chair_20.txt",  # "data/702_coord.npy"
                 label_file="data/702_instance_with_class_pred.npy",
                 mode="object",
                 C2W=C2W,
@@ -57,6 +58,8 @@ def main():
             logger(e, f">>>>>>>>>>> 포인트 클라우드 로드 오류")
             return
 
+        transformer = SimilarityTransformer()
+
         ############################### 메인 루프 ###############################
         while True:
             capture = device.update()
@@ -67,8 +70,7 @@ def main():
 
             # 손 제스처 업데이트
             try:
-                hand_results = process_hand_gestures(frame)
-                print(hand_results)
+                left_hand_ges, right_hand_ges = process_hand_gestures(frame)
 
             except Exception as e:
                 logger(
@@ -78,6 +80,7 @@ def main():
 
             # 손 위치 업데이트
             # 이안에다가 제스처에 따라 원 색상 변경하는 코드를 추가하는게 낫겠죠?
+            # 생각해보니 palm인걸 인식할 필요가 없지 않나???
             try:
                 body_frame = body_tracker.update()
                 ret, left_hand_pos, right_hand_pos = get_kinect_hand_positions(
@@ -93,13 +96,26 @@ def main():
                         left_hand_pos,
                         right_hand_pos,
                         instance_spheres,
+                        left_hand_ges,
+                        right_hand_ges,
                     )
                     # print(f"거리: {distance_cm} cm")
 
             except Exception as e:
                 logger(
-                    e, f">>>>>>>>>>> Skeleton에서 손 위치를 가져오는데 실패했습니다."
+                    e, f">>>>>>>>>>> Skeleton에서 손 위치를 가져오는 데 실패했습니다."
                 )
+                continue
+
+            try:
+                if left_hand_ges and right_hand_ges == "Fist":
+                    transform_matrix = transformer.compute_similarity_transform(
+                        left_hand_pos, right_hand_pos
+                    )
+                    print(transform_matrix)
+
+            except Exception as e:
+                logger(e, f">>>>>>>>>>> pcd를 조작하는 데 실패했습니다.")
                 continue
 
             vis.poll_events()

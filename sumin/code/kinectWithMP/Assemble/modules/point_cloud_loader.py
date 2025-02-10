@@ -115,7 +115,7 @@ def load_point_cloud_from_instance_npy(file_path, pred_path, mode):
 def load_point_cloud_from_txt(file_path, mode):
     point_cloud_data = np.loadtxt(file_path)
 
-    scale = 100 if mode == "object" else 1000
+    scale = 250 if mode == "object" else 1000
     points = point_cloud_data[:, :3] * scale
     colors = point_cloud_data[:, 3:] / 255.0
 
@@ -127,4 +127,10 @@ def load_point_cloud_from_txt(file_path, mode):
     pcd.points = o3d.utility.Vector3dVector(points)
     pcd.colors = o3d.utility.Vector3dVector(colors)
 
-    return pcd
+    # 인스턴스 평균 위치 계산 및 구체 생성
+    mean_point = np.mean(points, axis=0)
+    sphere = o3d.geometry.TriangleMesh.create_sphere(radius=25)
+    sphere.translate(mean_point)
+    sphere.paint_uniform_color([0, 0, 0])
+
+    return pcd, [sphere]
