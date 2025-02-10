@@ -61,7 +61,7 @@ def update_hand_positions(
         right_distance = np.linalg.norm(new_right_pos - sphere_center)
 
         # 가까운 거리 판정 (200 미만일 경우 빨간색, 그렇지 않으면 검정색)
-        if left_distance < 200 and right_distance < 200:
+        if left_distance < 150 and right_distance < 150:
             sphere.paint_uniform_color([1, 0, 0])  # 빨간색
         else:
             sphere.paint_uniform_color([0, 0, 0])  # 검정색
