@@ -1,28 +1,19 @@
-import cv2, time
+import cv2
+import time
+import numpy as np
 from modules.parameters import *
 from modules.kinect_manager import initialize_kinect, reset_kinect_devices
 from modules.visualization import setup_scene
 from modules.body_tracking import (
     get_kinect_body_positions,
     update_body_positions,
-    draw_pointing_cylinder,
-    get_cylinder_segment_from_body,
+    draw_pointing_arrow,
+    get_arrow_segment_from_body,
 )
 from modules.bounding_box_collision import (
     check_cylinder_hit_instances,
     create_aabb_lineset,
 )
-
-
-def logger(*data):
-    if len(data) == 1:  # 일반 출력
-        print(data[0])
-    else:  # 예외 처리
-        e, msg = data
-        print("=======================================")
-        print(e)
-        print("=======================================")
-        print(msg)
 
 
 def main():
@@ -32,82 +23,72 @@ def main():
             reset_kinect_devices()
             device, body_tracker = initialize_kinect()
         except Exception as e:
-            logger(e, ">>>>>>>>>>> Kinect 초기화 오류:")
+            print("Kinect 초기화 오류:", e)
             return
 
-        # 포인트 클라우드 및 장면 설정
+        # 포인트 클라우드 및 시각화 장면 설정
         try:
             vis, instance_boxes = setup_scene(
-                point_cloud_file="data/702_coord.npy",  # "data/702_coord.npy"
+                point_cloud_file="data/702_coord.npy",
                 label_file="data/702_instance_with_class_pred.npy",
             )
-        except FileNotFoundError as e:
-            logger(e, f">>>>>>>>>>> 파일을 찾을 수 없습니다")
-            return
         except Exception as e:
-            logger(e, f">>>>>>>>>>> 포인트 클라우드 로드 오류")
+            print("포인트 클라우드 로드 오류:", e)
             return
 
-            # draw_pointing_cylinder() 함수에서 사용할 스토리지
-        cylinder_storage = {
-            "cylinder": None,
-            "prev_transform": np.eye(4),
-        }
+        # 각 인스턴스의 바운딩박스를 LineSet으로 생성 및 저장 (인스턴스 색상을 사용)
+        for inst in instance_boxes:
+            ls = create_aabb_lineset(inst)  # inst 내 "color"를 사용
+            vis.add_geometry(ls)
+            inst["lineset"] = ls
+
+        # 사람 스켈레톤 선(LineSet)과 관절 구체(sphere) 저장소
+        joint_storage = {}
+        # 팔꿈치에서 손목 방향으로 그릴 arrow(반직선) 저장소
+        arrow_storage = {"arrow": None, "prev_transform": np.eye(4)}
 
         time.sleep(2)
-
-        # AABB를 시각화 (LineSet)으로 표시
-        line_sets = []
-        for box_info in instance_boxes:
-            aabb = box_info["aabb"]
-            ls = create_aabb_lineset(aabb, color=[0, 1, 0])  # 예: 녹색
-            vis.add_geometry(ls)
-            line_sets.append(ls)
 
         while True:
             capture = device.update()
             ret, frame = capture.get_color_image()
             if not ret:
-                logger(">>>>>>>>>>> Kinect 프레임을 가져올 수 없습니다.")
+                print("Kinect 프레임을 가져올 수 없습니다.")
                 continue
 
             try:
                 body_frame = body_tracker.update()
-                ret_body, body_pos = get_kinect_body_positions(body_frame)
-
-                if ret_body:
-                    update_body_positions(vis, body_pos)
-                    draw_pointing_cylinder(vis, body_pos, cylinder_storage)
-                    start, end, cyl_radius = get_cylinder_segment_from_body(body_pos)
-
-                    try:
-                        hit_labels = check_cylinder_hit_instances(
-                            start=start,
-                            end=end,
-                            cylinder_radius=cyl_radius,
-                            instance_boxes=instance_boxes,
+                body_pos = get_kinect_body_positions(body_frame)
+                if body_pos is not None:
+                    # 스켈레톤 선과 각 관절 구체 업데이트
+                    update_body_positions(vis, body_pos, joint_storage)
+                    # 팔꿈치에서 손목 방향의 arrow(반직선) 그리기
+                    draw_pointing_arrow(vis, body_pos, arrow_storage)
+                    # arrow 길이를 1500으로 연장하여 충돌 계산
+                    start, end, arrow_radius = get_arrow_segment_from_body(body_pos)
+                    if start is not None and end is not None:
+                        # 첫 번째 충돌하는 바운딩박스 정보를 반환 (없으면 None)
+                        first_collision = check_cylinder_hit_instances(
+                            start, end, arrow_radius, instance_boxes
                         )
-
-                        if hit_labels:
-                            print(f"Pointing cylinder hits: {hit_labels}")
+                        if first_collision is not None:
+                            # 첫 충돌 대상의 대표 색으로 arrow 색 변경
+                            arrow_storage["arrow"].paint_uniform_color(
+                                first_collision["color"]
+                            )
+                            print(
+                                "첫 충돌 대상 :",
+                                first_collision["kor_class_name"],
+                                " / ID :",
+                                first_collision["instance_label"],
+                            )
                         else:
-                            pass
-
-                    except Exception as e:
-                        logger(
-                            e,
-                            f">>>>>>>>>>> 충돌 감지에 실패했습니다.",
-                        )
-                        continue
-
+                            # 충돌 없으면 노란색 유지
+                            arrow_storage["arrow"].paint_uniform_color([1, 1, 0])
                 else:
-                    # 스켈레톤 자체 추적 실패 -> 실린더 숨김
-                    draw_pointing_cylinder(vis, None, cylinder_storage)
-
+                    draw_pointing_arrow(vis, None, arrow_storage)
             except Exception as e:
-                logger(
-                    e, f">>>>>>>>>>> Skeleton에서 body pos를 가져오는 데 실패했습니다."
-                )
+                print("Skeleton 처리 오류:", e)
                 continue
 
             vis.poll_events()
@@ -120,22 +101,17 @@ def main():
         device.close()
         cv2.destroyAllWindows()
         vis.destroy_window()
+        print("정상적으로 종료되었습니다.")
 
     except Exception as e:
-        logger(e, f">>>>>>>>>>> while 문 예외 발생")
-
-    finally:  # 장치 초기화 해제 및 창 닫기
+        print("예외 발생:", e)
+    finally:
         cv2.destroyAllWindows()
-
-        variables = {**locals(), **locals()}
-        if "device" in variables:
+        try:
             device.close()
-        # if "vis" in variables:
-        #     vis.destroy_window()
-
-        logger(">>>>>>>>>>> 정상적으로 종료되었습니다.")
+        except:
+            pass
 
 
-# main 함수 실행
 if __name__ == "__main__":
     main()

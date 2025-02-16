@@ -4,7 +4,6 @@ import pykinect_azure as pykinect
 
 
 def reset_kinect_devices():
-    """Azure Kinect 장치를 강제로 초기화 및 닫기."""
     if os.name == "nt":
         try:
             k4a = ctypes.windll.LoadLibrary(
@@ -15,14 +14,12 @@ def reset_kinect_devices():
             handle = ctypes.c_void_p(0)
             k4a.k4a_device_close(handle)
         except Exception as e:
-            print(">>>>>>>>>>> Kinect 장치 재설정 오류:", e)
+            print("Kinect 장치 재설정 오류:", e)
     else:
-        print(">>>>>>>>>>> 이 기능은 Windows 환경에서만 지원됩니다.")
+        print("이 기능은 Windows 환경에서만 지원됩니다.")
 
 
 def initialize_kinect():
-    """Kinect 장치 및 트래커 초기화."""
-    # reset_kinect_devices()
     pykinect.initialize_libraries(track_body=True)
     device_config = pykinect.default_configuration
     device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_720P

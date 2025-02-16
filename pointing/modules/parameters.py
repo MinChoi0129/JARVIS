@@ -1,16 +1,14 @@
-import cv2
 import numpy as np
 
 fx = 608.427060
 fy = 608.427060
-cx = 640.000000
-cy = 360.000000
+cx = 640.0
+cy = 360.0
 k1 = 0.077901
 k2 = -0.053721
 p1 = -0.001677
 p2 = -0.001842
 
-# 카메라 행렬과 왜곡 계수
 camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 dist_coeffs = np.array([k1, k2, p1, p2, 0])
 
@@ -47,8 +45,6 @@ K4ABT_JOINT_EAR_LEFT = 29
 K4ABT_JOINT_EYE_RIGHT = 30
 K4ABT_JOINT_EAR_RIGHT = 31
 
-# 관절 연결(라인) 정의: 보통 기본적인 인체 골격 구조 위주
-# (예: 골반-척추, 척추-목, 왼쪽 어깨-팔-손목, 오른쪽 어깨-팔-손목 등)
 skeleton_edges = [
     (K4ABT_JOINT_PELVIS, K4ABT_JOINT_SPINE_NAVAL),
     (K4ABT_JOINT_SPINE_NAVAL, K4ABT_JOINT_SPINE_CHEST),

@@ -2,132 +2,161 @@ import numpy as np
 import open3d as o3d
 import random
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
-
-# 62개의 랜덤 컬러맵 선택
+# 63개의 랜덤 컬러맵 선택
 color_map_names = random.sample(plt.colormaps(), 63)
 
-names = {
-    0: "ceiling",
-    1: "floor",
-    2: "wall",
-    3: "beam",
-    4: "column",
-    5: "window",
-    6: "door",
-    7: "table",
-    8: "chair",
-    9: "sofa",
-    10: "bookcase",
-    11: "board",
-    12: "clutter",
-}
-
-# 각 컬러맵에서 62개의 색상 (r, g, b) 값 미리 생성하여 캐시
-# precomputed_colors = []
-# for cmap_name in color_map_names:
-#     cmap = plt.get_cmap(cmap_name)
-#     colors = [cmap(i / 62)[:3] for i in range(63)]  # 0부터 61까지의 색상 생성
-#     precomputed_colors.append(colors)
-
-########### 흰색과 검은색이 나오면 객체가 잘 안보이길래 안나오는 코드를 넣었습니다만 지피티돌린거라 수정볼 필요가 있겠씁니다.
 precomputed_colors = []
 for cmap_name in color_map_names:
     cmap = plt.get_cmap(cmap_name)
     safe_colors = []
-
-    # 컬러맵에서 62개의 색상을 생성하고 흰색/검은색 근처를 제거
     for i in range(63):
-        color = cmap(i / 62)[:3]  # (r, g, b) 값만 가져옴
+        color = cmap(i / 62)[:3]
         if not (
-            np.allclose(color, [1, 1, 1], atol=0.1)  # 흰색 근처
-            or np.allclose(color, [0, 0, 0], atol=0.1)  # 검은색 근처
+            np.allclose(color, [1, 1, 1], atol=0.1)
+            or np.allclose(color, [0, 0, 0], atol=0.1)
         ):
             safe_colors.append(color)
-
-    # 필터링된 색상 리스트를 사용
     if len(safe_colors) < 63:
-        # 색상이 부족할 경우 반복해서 추가 (색상 다양성을 유지)
         safe_colors = (
             safe_colors * (63 // len(safe_colors))
             + safe_colors[: 63 % len(safe_colors)]
         )
-
     precomputed_colors.append(safe_colors[:63])
 
 
+# def load_point_cloud_from_instance_npy(file_path, pred_path):
+#     points = np.load(file_path)
+#     labels = np.load(pred_path)
+#     exclude_labels = [0, 2, 12, 5, 6, 3]
+#     mask = ~np.isin(labels[:, 0], exclude_labels)
+#     points = points[mask]
+#     labels = labels[mask]
+#     colors = np.array([precomputed_colors[label[1] % 63][label[1]] for label in labels])
+#     scale = 250
+#     points = points * scale - np.mean(points, axis=0) + np.array([0, 400, 350])
+#     pcd = o3d.geometry.PointCloud()
+#     pcd.points = o3d.utility.Vector3dVector(points)
+#     pcd.colors = o3d.utility.Vector3dVector(colors)
+#     unique_instances = np.unique(labels[:, 1])
+#     instance_boxes = []
+#     for inst_label in unique_instances:
+#         mask_inst = labels[:, 1] == inst_label
+#         inst_points = points[mask_inst]
+#         if len(inst_points) == 0:
+#             continue
+#         min_bound = np.min(inst_points, axis=0)
+#         max_bound = np.max(inst_points, axis=0)
+#         inst_colors = colors[mask_inst]
+#         instance_color = inst_colors.mean(axis=0)
+#         instance_boxes.append(
+#             {
+#                 "instance_label": int(inst_label),
+#                 "min_bound": min_bound,
+#                 "max_bound": max_bound,
+#                 "color": instance_color.tolist(),
+#             }
+#         )
+#     return pcd, instance_boxes
+
+names = {
+    "ceiling": 0,
+    "floor": 1,
+    "wall": 2,
+    "beam": 3,
+    "column": 4,
+    "window": 5,
+    "door": 6,
+    "table": 7,
+    "chair": 8,
+    "sofa": 9,
+    "bookcase": 10,
+    "board": 11,
+    "clutter": 12,
+}
+
+eng_to_kor = {
+    "ceiling": "천장",
+    "floor": "바닥",
+    "wall": "벽",
+    "beam": "가로 기둥",
+    "column": "세로 기둥",
+    "window": "창문",
+    "door": "문",
+    "table": "책상",
+    "chair": "의자",
+    "sofa": "소파",
+    "bookcase": "책꽂이",
+    "board": "칠판",
+    "clutter": "기타",
+}
+
+
+def to_korean(eng_label):
+    return eng_to_kor[eng_label]
+
+
 def load_point_cloud_from_instance_npy(file_path, pred_path):
-    """포인트 클라우드 데이터를 npy 파일로부터 로드하고, 인스턴스별 구체 객체를 포함하여 반환."""
-    # 포인트와 라벨 데이터 로드
     points = np.load(file_path)
     labels = np.load(pred_path)
-    print("PCD, label의 shape:", points.shape, labels.shape)
 
-    # 벽(2), 천장(0) 등의 클래스를 제거하기 위한 마스크 설정
-    exclude_labels = [0, 2, 12, 5, 6, 3]
-    mask = ~np.isin(
-        labels[:, 0], exclude_labels
-    )  # 첫 번째 채널(클래스 라벨) 기준으로 필터링
-
-    # 필터링된 포인트와 라벨 데이터
+    exclude_labels = [
+        names["ceiling"],
+        names["floor"],
+        names["wall"],
+        names["beam"],
+        names["window"],
+        names["door"],
+        names["clutter"],
+    ]
+    mask = ~np.isin(labels[:, 0], exclude_labels)
     points = points[mask]
     labels = labels[mask]
-
-    # 색상 매핑 - 인스턴스 라벨에 대한 색상 할당
-    colors = np.array(
-        [precomputed_colors[label[1] % 63][label[1]] for label in labels]
-    )  # 인스턴스 라벨 기준 색상
-
-    print("Filtered label 종류:", len(set(labels[:, 1])))  # 인스턴스 라벨 종류 출력
-
-    # 스케일 조정
+    colors = np.array([precomputed_colors[label[1] % 63][label[1]] for label in labels])
     scale = 250
     points = points * scale - np.mean(points, axis=0) + np.array([0, 400, 350])
-
-    # 포인트 클라우드 객체 생성 및 설정
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
     pcd.colors = o3d.utility.Vector3dVector(colors)
-
-    # 인스턴스별 AABB 구하기
     unique_instances = np.unique(labels[:, 1])
     instance_boxes = []
-
-    for inst_label in unique_instances:
-        mask = labels[:, 1] == inst_label
-        inst_points = points[mask]
+    for inst_label in tqdm(unique_instances):
+        mask_inst = labels[:, 1] == inst_label
+        inst_points = points[mask_inst]
         if len(inst_points) == 0:
             continue
 
-        inst_pcd = o3d.geometry.PointCloud()
-        inst_pcd.points = o3d.utility.Vector3dVector(inst_points)
-        aabb = inst_pcd.get_axis_aligned_bounding_box()
+        # 이상치 제거 (IQR 기반 필터링)
+        q1 = np.percentile(inst_points, 25, axis=0)
+        q3 = np.percentile(inst_points, 75, axis=0)
+        iqr = q3 - q1
+        lower_bound = q1 - 1.5 * iqr
+        upper_bound = q3 + 1.5 * iqr
 
-        instance_boxes.append({"instance_label": int(inst_label), "aabb": aabb})
+        filtered_points = inst_points[
+            np.all((inst_points >= lower_bound) & (inst_points <= upper_bound), axis=1)
+        ]
+        if len(filtered_points) == 0:
+            continue
 
-    # return pcd, instance_boxes (AABB)
+        min_bound = np.min(filtered_points, axis=0)
+        max_bound = np.max(filtered_points, axis=0)
+        inst_colors = colors[mask_inst]
+        instance_color = inst_colors.mean(axis=0)
+
+        # 클래스 이름 추가
+        class_id = labels[mask_inst][0, 0]  # 해당 인스턴스의 첫 번째 점의 클래스 ID
+        class_name = [key for key, value in names.items() if value == class_id][0]
+
+        instance_boxes.append(
+            {
+                "instance_label": int(inst_label),
+                "class_name": class_name,
+                "kor_class_name": to_korean(class_name),
+                "min_bound": min_bound,
+                "max_bound": max_bound,
+                "color": instance_color.tolist(),
+            }
+        )
     return pcd, instance_boxes
-
-
-def load_point_cloud_from_txt(file_path):
-    point_cloud_data = np.loadtxt(file_path)
-
-    scale = 250
-    points = point_cloud_data[:, :3] * scale
-    colors = point_cloud_data[:, 3:] / 255.0
-
-    center = np.mean(points, axis=0)
-    points -= center
-    points += np.array([84, 84, 168])
-
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    pcd.colors = o3d.utility.Vector3dVector(colors)
-
-    # 인스턴스 평균 위치 계산 및 구체 생성
-    mean_point = np.mean(points, axis=0)
-    sphere = o3d.geometry.TriangleMesh.create_sphere(radius=25)
-    sphere.translate(mean_point)
-    sphere.paint_uniform_color([0, 0, 0])
-
-    return pcd, [sphere]
