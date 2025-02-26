@@ -1,16 +1,35 @@
+###parameter.py
+
+import cv2
 import numpy as np
 
-fx = 608.427060
-fy = 608.427060
-cx = 640.0
-cy = 360.0
-k1 = 0.077901
-k2 = -0.053721
-p1 = -0.001677
-p2 = -0.001842
+
+fx = 611.335130
+fy = 611.335130
+cx = 640.000000
+cy = 360.000000
+k1 = 0.059921
+k2 = -0.037491
+p1 = -0.003633
+p2 = -0.003438
+
+marker_length = 168
+
+aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+aruco_params = cv2.aruco.DetectorParameters()
 
 camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 dist_coeffs = np.array([k1, k2, p1, p2, 0])
+
+
+C2W = np.array(
+    [
+        [-6.06996853e-01, 2.34425432e-01, -7.59341516e-01, 5.60460157e02],
+        [7.92559668e-01, 1.08422645e-01, -6.00078080e-01, 2.04398047e03],
+        [-5.83437479e-02, -9.66068966e-01, -2.51608347e-01, 7.45090459e02],
+        [0.00000000e00, 0.00000000e00, 0.00000000e00, 1.00000000e00],
+    ]
+)
 
 K4ABT_JOINT_PELVIS = 0
 K4ABT_JOINT_SPINE_NAVAL = 1

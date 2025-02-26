@@ -4,7 +4,7 @@ import random
 
 # 데이터 로드
 coord = np.load("data/702_coord.npy")  # (n, 3) 형태의 좌표 데이터
-pred = np.load("data/702_instance_with_class_pred.npy")  # (n,) 형태의 label 데이터
+pred = np.load("data/702_instance_pred.npy")  # (n,) 형태의 label 데이터
 
 print(pred)
 

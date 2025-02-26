@@ -1,3 +1,5 @@
+###kinect_manager.py
+
 import os
 import ctypes
 import pykinect_azure as pykinect

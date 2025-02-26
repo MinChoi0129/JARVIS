@@ -1,3 +1,5 @@
+###bounding_box_collision.py
+
 import numpy as np
 import open3d as o3d
 
@@ -36,23 +38,20 @@ def intersect_segment_aabb_with_t(start, end, bbox):
     return None
 
 
-def check_cylinder_hit_instances(start, end, cylinder_radius, instance_boxes):
+def check_cylinder_hit_all_instances(start, end, cylinder_radius, instance_boxes):
     """
     각 인스턴스의 AABB(충돌 두께 고려 확장)를 선분과 충돌 검사하여,
-    가장 먼저 충돌하는 인스턴스(즉, 최소 t값)를 반환.
-    충돌 없으면 None 반환.
+    충돌하는 모든 인스턴스를 리스트로 반환합니다.
+    충돌하는 인스턴스가 없으면 빈 리스트를 반환합니다.
     """
-    first_t = None
-    first_inst = None
+    hit_instances = []
     for inst in instance_boxes:
         bbox = {"min_bound": inst["min_bound"], "max_bound": inst["max_bound"]}
         expanded_bbox = expand_aabb(bbox, cylinder_radius)
         t = intersect_segment_aabb_with_t(start, end, expanded_bbox)
         if t is not None:
-            if first_t is None or t < first_t:
-                first_t = t
-                first_inst = inst
-    return first_inst
+            hit_instances.append(inst)
+    return hit_instances
 
 
 def create_aabb_lineset(bbox, default_color=[1, 0, 0]):

@@ -1,6 +1,8 @@
+###body_tracking.py
+
 import numpy as np
 import open3d as o3d
-from modules.parameters import skeleton_edges
+from modules.parameters import C2W, skeleton_edges
 
 
 def get_kinect_body_positions(body_frame):
@@ -15,7 +17,7 @@ def get_kinect_body_positions(body_frame):
     for joint in skeleton.joints:
         if joint.confidence_level >= 1:
             pos = joint.position.xyz
-            joints.append([pos.x, pos.z, -pos.y])
+            joints.append((C2W @ (np.array([pos.x, pos.y, pos.z, 1]).T))[:3])
         else:
             joints.append([False, False, False])
     return np.array(joints, dtype=np.float32)
@@ -121,11 +123,11 @@ def draw_pointing_arrow(
         inv_transform = np.linalg.inv(storage["prev_transform"])
         storage["arrow"].transform(inv_transform)
     else:
-        arrow_length = 1500.0
+        arrow_length = 5000.0
         cylinder_height = arrow_length * 0.9
         cone_height = arrow_length * 0.1
         arrow = o3d.geometry.TriangleMesh.create_arrow(
-            cylinder_radius=5,
+            cylinder_radius=20,
             cone_radius=0.5,
             cylinder_height=cylinder_height,
             cone_height=cone_height,
@@ -186,7 +188,7 @@ def get_arrow_segment_from_body(body_pos):
     if norm_dir < 1e-5:
         return None, None, 0.0
     dir_unit = direction / norm_dir
-    arrow_length = 1500.0
+    arrow_length = 5000.0
     start = pos_elbow
     end = pos_elbow + dir_unit * arrow_length
     radius = 0.05
