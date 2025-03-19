@@ -9,7 +9,7 @@ def reset_kinect_devices():
     if os.name == "nt":
         try:
             k4a = ctypes.windll.LoadLibrary(
-                r"C:\Program Files\Azure Kinect SDK v1.4.1\sdk\windows-desktop\amd64\release\bin\k4a.dll"
+                r"C:\Program Files\Azure Kinect SDK v1.4.2\sdk\windows-desktop\amd64\release\bin\k4a.dll"
             )
             k4a.k4a_device_close.restype = ctypes.c_void_p
             k4a.k4a_device_close.argtypes = [ctypes.c_void_p]

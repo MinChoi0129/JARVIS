@@ -21,6 +21,13 @@ aruco_params = cv2.aruco.DetectorParameters()
 camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 dist_coeffs = np.array([k1, k2, p1, p2, 0])
 
+radii1 = [0.01, 1.25, 2.5, 3.75, 5]  ## 5
+radii2 = [0.01, 7.5, 15, 22.5, 30]  ## 30
+radii3 = [0.01, 12.5, 25, 37.5, 50]  ## 50
+radii4 = [0.01, 25, 50, 75, 100]  ## 100
+
+# view_cyliderR = radii[-1]
+view_cyliderR = 100
 
 C2W = np.array(
     [

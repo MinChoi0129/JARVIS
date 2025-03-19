@@ -2,7 +2,7 @@
 
 import numpy as np
 import open3d as o3d
-from modules.parameters import C2W, skeleton_edges
+from modules.parameters import C2W, skeleton_edges, view_cyliderR
 
 
 def get_kinect_body_positions(body_frame):
@@ -123,11 +123,11 @@ def draw_pointing_arrow(
         inv_transform = np.linalg.inv(storage["prev_transform"])
         storage["arrow"].transform(inv_transform)
     else:
-        arrow_length = 5000.0
+        arrow_length = 2500.0
         cylinder_height = arrow_length * 0.9
         cone_height = arrow_length * 0.1
         arrow = o3d.geometry.TriangleMesh.create_arrow(
-            cylinder_radius=20,
+            cylinder_radius=view_cyliderR,
             cone_radius=0.5,
             cylinder_height=cylinder_height,
             cone_height=cone_height,
@@ -191,5 +191,4 @@ def get_arrow_segment_from_body(body_pos):
     arrow_length = 5000.0
     start = pos_elbow
     end = pos_elbow + dir_unit * arrow_length
-    radius = 0.05
-    return start, end, radius
+    return start, end
